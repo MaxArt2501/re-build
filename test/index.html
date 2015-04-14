@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>RE-Build tests</title>
+        <link rel="stylesheet" href="../node_modules/mocha/mocha.css" />
+    </head>
+    <body>
+        <div id="mocha"></div>
+        <script src="../node_modules/mocha/mocha.js"></script>
+        <script type="text/javascript" src="../re-build.js"></script>
+        <script>mocha.setup("bdd")</script>
+        <script src="tests.js"></script>
+        <script>mocha.run()</script>
+    </body>
+</html>

@@ -1,0 +1,35 @@
+{
+  "name": "re-build",
+  "version": "0.0.1",
+  "description": "Building regular expressions with natural language",
+  "main": "re-build.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MaxArt2501/re-build.git"
+  },
+  "keywords": [
+    "regex",
+    "regular-expression",
+    "regexp",
+    "composition",
+    "builder"
+  ],
+  "author": {
+    "name": "Massimo Artizzu",
+    "email": "maxart.x@gmail.com"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MaxArt2501/re-build/issues"
+  },
+  "homepage": "https://github.com/MaxArt2501/re-build",
+  "devDependencies": {
+    "mocha": "^2.2.0"
+  }
+}

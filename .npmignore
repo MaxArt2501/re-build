@@ -1,4 +1,7 @@
-node_modules/
+.gitignore
+.gitattributes
+*.min.*
+bower.json
 
 # Windows image file caches
 Thumbs.db
