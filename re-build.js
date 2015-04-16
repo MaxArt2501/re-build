@@ -462,8 +462,16 @@
             enumerable: true, configurable: false
         });
     };
-    RegExpBuilder.prototype.valueOf = RegExpBuilder.prototype.toRegExp = function() { return this.regex; };
-    RegExpBuilder.prototype.toString = function() { return "/" + this.source + "/" + this.flags; };
+    RegExpBuilder.prototype = {
+        constructor: RegExpBuilder,
+        valueOf: RegExpBuilder.prototype.toRegExp = function() { return this.regex; },
+        toString: function() { return "/" + this.source + "/" + this.flags; },
+        test: function(string) { return this.regex.test(string); },
+        exec: function(string) { return this.regex.exec(string); },
+        replace: function(string, subs) { return string.replace(this.regex, subs); },
+        split: function(string) { return string.split(this.regex); },
+        search: function(string) { return string.search(this.regex); }
+    };
 
     function RE() {
         return buildBuilder(new RegExpBuilder(getFlags(RE), parseArgs(arguments)), [ thenable ]);

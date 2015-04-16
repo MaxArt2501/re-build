@@ -67,7 +67,7 @@ var builder = RE.matching("xyz");
 The output is *not*, however, a regular expression, but a a regular expression *builder* that can be extended, or used as an extension for other builders. To get the corrisponding regular expression, use the `regex` property or the `toRegExp()/valueOf()` methods.
 
 ```js
-var start = RE.matching.theStart.then(builder).regex;        // /^xyz/
+var start = RE.matching.theStart.then(builder).toRegExp(); // /^xyz/
 
 var foo = RE.matching(builder).then.oneOrMore.digit.regex; // /xyz\d+/
 ```
@@ -116,7 +116,7 @@ Function     | Result   | Meaning
 -------------|----------|-----------
 `ascii(n)`   | `\xhh`   | ASCII character corrisponding to `n`
 `unicode(n)` | `\uhhhh` | Unicode character  corrisponding to `n`
-`control(a)` | `\cx`    | Control sequence corrisponding to the letter `a`
+`control(a)` | `\ca`    | Control sequence corrisponding to the letter `a`
 
 With the exception of `wordBoundary`, `theStart` and `theEnd`, all of the previous words can be used inside character sets (see after).
 
@@ -134,7 +134,7 @@ Alternatively, you can set the flags with the `withFlags` method of the `RE` obj
 ```js
 // The following regexes are equivalent: /[a-f]/gi
 var foo = RE.globally.anyCase.matching.oneOf.range("a", "f").regex;
-var bar = RE.withFlags("gm").matching.oneOf.range("a", "f").regex;
+var bar = RE.withFlags("gi").matching.oneOf.range("a", "f").regex;
 ```
 
 You can't change a regex builder's flags, but you can create a copy of a builder with different flags:

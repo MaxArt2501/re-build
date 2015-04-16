@@ -7,7 +7,12 @@
 })(this, function(RE) {
 "use strict";
 
-function assert(builder, expsource, expflags) {
+function assert(value, expected) {
+    if (value !== expected)
+        throw new Error("Expected " + expected + ", computed " + value);
+}
+
+function assertBuilder(builder, expsource, expflags) {
     assertSource(builder, expsource);
     assertFlags(builder, expflags);
 }
@@ -25,7 +30,7 @@ function assertFlags(builder, expected) {
         throw new Error("Expected flags \"" + expected + "\", computed \"" + flags + "\"");
 }
 
-describe("RE build", function() {
+describe("RE-Build'ers", function() {
     it("Character sequences", function() {
         assertSource(RE.matching("abc"),              "abc");
         assertSource(RE.matching("a", /b/, RE("c")),  "abc");
@@ -42,6 +47,11 @@ describe("RE build", function() {
             assertFlags(RE.stickily.matching("abc"), "y");
         assertFlags(RE.globally.anyCase.fullText.matching("abc"), "gim");
         assertFlags(RE.withFlags("img").matching("abc"),          "gim");
+        
+        // Cloning a builder with different flags
+        var builder = RE.matching.oneOrMore.digit,
+            other = RE.globally.matching(builder);
+        assertBuilder(other, builder.source, "g");
     });
 
     it("Character classes and aliases", function() {
@@ -126,7 +136,7 @@ describe("RE build", function() {
         assertSource(RE.matching.atMost(2)("a"),     "a{,2}");
         assertSource(RE.matching.exactly(4)("a"),    "a{4}");
         assertSource(RE.matching.between(2, 4)("a"), "a{2,4}");
-
+        
         assertSource(RE.matching.oneOrMore("abc"),                               "(?:abc)+");
         assertSource(RE.matching.oneOrMore.digit,                              "\\d+");
         assertSource(RE.matching.oneOrMore.oneOf("abc"),                         "[abc]+");
@@ -150,7 +160,7 @@ describe("RE build", function() {
         assertSource(RE.matching.lazily.atMost(2)("a"),     "a{,2}?");
         assertSource(RE.matching.lazily.exactly(4)("a"),    "a{4}?");
         assertSource(RE.matching.lazily.between(2, 4)("a"), "a{2,4}?");
-
+        
         assertSource(RE.matching.lazily.oneOrMore("abc"),                               "(?:abc)+?");
         assertSource(RE.matching.lazily.oneOrMore.digit,                              "\\d+?");
         assertSource(RE.matching.lazily.oneOrMore.oneOf("abc"),                         "[abc]+?");
@@ -181,9 +191,9 @@ describe("RE build", function() {
             ).then.theEnd,
             "^(?:[01]\\d|2[0-3])(?::[0-5]\\d){2}$"
         );
-
+        
         // Matching HTML/XML attributes (sort of)
-        assert(
+        assertBuilder(
             RE.globally.anyCase.matching.whiteSpace
                 .then.oneOf.range("a", "z").then.anyAmountOf.alphaNumeric
                 .then.anyAmountOf.whiteSpace.then("=").then.anyAmountOf.whiteSpace
@@ -191,7 +201,7 @@ describe("RE build", function() {
                 .then.lazily.anyAmountOf.anyChar.then.reference(1),
             "\\s[a-z]\\w*\\s*=\\s*(['\"]).*?\\1", "gi"
         );
-
+        
         // Matching CSS colors
         var spaces = RE.anyAmountOf(" "),
             comma = RE(spaces).then(",").then(spaces),
@@ -210,30 +220,70 @@ describe("RE build", function() {
                     .or("0")).then("%"),
             opacity = RE.group(RE.noneOrOne("0").then(".").then.oneOrMore.digit
                     .or.oneOf("01"));
-        assert(
-            RE.anyCase.matching
+        assertBuilder(
+            RE.anyCase.matching // #xxxxxx or #xxx
                     .not.wordBoundary.then("#")
                     .then.between(1, 2).group(
                         RE.exactly(3)(RE.oneOf.digit.and.range("a", "f"))
                     ).then.wordBoundary
-                .or
+                .or // rgb(x, y, z)
                     .wordBoundary.then("rgb(").then(spaces).then.exactly(2).group(
                         RE(upTo255).then(comma)
                     ).then(upTo255).then(spaces).then(")")
-                .or
+                .or // rgba(x, y, z, k)
                     .wordBoundary.then("rgba(").then(spaces).then.exactly(3).group(
                         RE(upTo255).then(comma)
                     ).then(opacity).then(spaces).then(")")
-                .or
+                .or // hsl(x, y, z)
                     .wordBoundary.then("hsl(").then(spaces).then(upTo360).then(comma)
                     .then(percentage).then(comma).then(percentage)
                     .then(spaces).then(")")
-                .or
+                .or // hsla(x, y, z, k)
                     .wordBoundary.then("hsla(").then(spaces).then(upTo360).then(comma)
                     .then(percentage).then(comma).then(percentage).then(comma)
                     .then(opacity).then(spaces).then(")"),
             "\\B#(?:[\\da-f]{3}){1,2}\\b|\\brgb\\( *(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d?|0) *, *){2}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d?|0) *\\)|\\brgba\\( *(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d?|0) *, *){3}(?:0?\\.\\d+|[01]) *\\)|\\bhsl\\( *(?:360|3[0-5]\\d|[12]\\d\\d|[1-9]\\d?|0) *, *(?:100|[1-9]\\d?|0)% *, *(?:100|[1-9]\\d?|0)% *\\)|\\bhsla\\( *(?:360|3[0-5]\\d|[12]\\d\\d|[1-9]\\d?|0) *, *(?:100|[1-9]\\d?|0)% *, *(?:100|[1-9]\\d?|0)% *, *(?:0?\\.\\d+|[01]) *\\)", "i"
         );
+    });
+});
+
+describe("Builder prototype", function() {
+    it("test", function() {
+        var builder = RE.matching.oneOrMore.digit;
+        assert(builder.test("We're living in " + new Date().getFullYear()), true);
+        assert(builder.test("Hello, world!"), false);
+    });
+
+    it("exec", function() {
+        var builder = RE.matching.oneOrMore.digit,
+            result = builder.exec("The answer is 42.");
+        assert(result instanceof Array, true);
+        assert(result[0].length, 2);
+        assert(result.index, 14);
+    });
+
+    it("replace", function() {
+        var reverseDate = RE.matching.capture(RE.exactly(4).digit).then("-")
+                            .then.capture(RE.exactly(2).digit).then("-")
+                            .then.capture(RE.exactly(2).digit);
+        assert(reverseDate.replace("2015-04-20", "$3/$2/$1"), "20/04/2015");
+        
+        var capital = RE.globally.matching.wordBoundary.then.oneOrMore.alphaNumeric;
+        assert(capital.replace("hello, world!", function(m) {
+            return m.charAt(0).toUpperCase() + m.substring(1);
+        }), "Hello, World!");
+    });
+
+    it("split", function() {
+        var space = RE.oneOrMore.whiteSpace;
+        assert(space.split("Lorem ipsum dolor sit amet").length, 5);
+        assert(space.split("RE-Build").length, 1);
+    });
+
+    it("search", function() {
+        var builder = RE.matching.oneOrMore.digit;
+        assert(builder.search("The answer is 42."), 14);
+        assert(builder.search("Hello, world!"), -1);
     });
 });
 
