@@ -43,6 +43,8 @@
         newLine: ["\\n"],
         formFeed: ["\\f"],
         null: ["\\0"],
+        slash: ["\\/"],
+        backslash: ["\\\\"],
 
         theStart: ["^", "", NOQUANTIFY + NOSETS],
         theEnd: ["$", "", NOQUANTIFY + NOSETS],
@@ -264,10 +266,21 @@
                 + "\\b" + source.slice(lastBracket)), [ thenable, andCharSet ]);
     };
     settable.range = function() {
+        function checkBoundary(bnd) {
+            if (typeof bnd === "string" && bnd.length === 1)
+                return parseSets(bnd);
+
+            if (bnd instanceof RegExpBuilder) {
+                bnd = bnd.source;
+                if (bnd.length === 1 || /^\\(?:[0btnvfr\/\\]|x[\da-fA-F]{2}|u[\da-fA-F]{4}|c[a-zA-Z])$/.test(bnd))
+                    return bnd;
+            }
+
+            throw new RangeError("Incorrect character range");
+        }
         return function(start, end) {
-            if (typeof start !== "string" || typeof end !== "string"
-                    || start.length !== 1 || end.length !== 1)
-                throw new RangeError("Incorrect character range");
+            start = checkBoundary(start);
+            end = checkBoundary(end);
 
             var source = this.source,
                 lastBracket = source.lastIndexOf("]");

@@ -55,6 +55,30 @@ var builder = RE.matching.theStart
 
 Other words that work as functions only usually accept other types of arguments.
 
+## Flags
+
+The flags of a builder (and its underlying regular expression) can be set using words starting from the `RE` object. After one of these words, another flag word or `matching` must follow, with the exception of `withFlags` that must be followed by `matching` only.
+
+* **`globally`**
+
+  Set the `global` flag on.
+
+* **`anyCase`**
+
+  Set the `ignoreCase` flag on.
+
+* **`fullText`**
+
+  Set the `multiline` flag on.
+
+* **`stickily`**
+
+  Set the `sticky` flag on.
+
+* **`withFlags(flags)`**
+
+  Set multiple flags. `flags` is expected to be a string containing letters in the set `"g"`, `"m"`, `"i"` and `"y"`.
+
 ## Conjunctions
 
 Conjunctions append additional blocks to the current source. They can follow any open or set block.
@@ -141,7 +165,7 @@ These words can be used in character sets only:
 
 * **`range(start, end)`**
 
-  Adds a character interval into the character set (`[...start-end...]`). `start` and `end` are supposed to be strings of single characters defining the boundaries of the character range.
+  Adds a character interval into the character set (`[...start-end...]`). `start` and `end` are supposed to be strings of single characters defining the boundaries of the character range; or they can be builders that define one single character, or character class usable in character ranges (which include: `ascii`, `unicode`, `control`, `newLine`, `cReturn`, `tab`, `vTab`, `formFeed`, `null`).
 
 * **`backspace`**
 

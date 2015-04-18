@@ -55,7 +55,7 @@ describe("RE-Build'ers", function() {
     });
 
     it("Character classes and aliases", function() {
-        assertSource(RE.matching.digit,      "\\d");
+        assertSource(RE.matching.digit,        "\\d");
         assertSource(RE.matching.alphaNumeric, "\\w");
         assertSource(RE.matching.whiteSpace,   "\\s");
         assertSource(RE.matching.wordBoundary, "\\b");
@@ -64,7 +64,16 @@ describe("RE-Build'ers", function() {
         assertSource(RE.matching.tab,          "\\t");
         assertSource(RE.matching.vTab,         "\\v");
         assertSource(RE.matching.formFeed,     "\\f");
+        assertSource(RE.matching.slash,        "\\/");
+        assertSource(RE.matching.backslash,    "\\\\");
         assertSource(RE.matching.anyChar,      ".");
+    });
+
+    it("Negated character classes", function() {
+        assertSource(RE.matching.not.digit,        "\\D");
+        assertSource(RE.matching.not.alphaNumeric, "\\W");
+        assertSource(RE.matching.not.whiteSpace,   "\\S");
+        assertSource(RE.matching.not.wordBoundary, "\\B");
     });
 
     it("Character escaping", function() {
@@ -74,49 +83,51 @@ describe("RE-Build'ers", function() {
         assertSource(RE.matching.control("M"),    "\\cM");
     });
 
-    it("Negated character classes", function() {
-        assertSource(RE.matching.not.digit,      "\\D");
-        assertSource(RE.matching.not.alphaNumeric, "\\W");
-        assertSource(RE.matching.not.whiteSpace,   "\\S");
-        assertSource(RE.matching.not.wordBoundary, "\\B");
-    });
-
     it("Concatenation of sequences and blocks", function() {
         assertSource(RE.matching("abc").then("de"),           "abcde");
-        assertSource(RE.matching("abc").then.digit,         "abc\\d");
-        assertSource(RE.matching("abc").then.not.digit,     "abc\\D");
-        assertSource(RE.matching.digit.then.digit,        "\\d\\d");
+        assertSource(RE.matching("abc").then.digit,           "abc\\d");
+        assertSource(RE.matching("abc").then.not.digit,       "abc\\D");
+        assertSource(RE.matching.digit.then.digit,            "\\d\\d");
         assertSource(RE.matching("ab").then("cd").then("ef"), "abcdef");
     });
 
     it("Character sets", function() {
-        assertSource(RE.matching.oneOf("abc"),                                    "[abc]");
-        assertSource(RE.matching.oneOf("a-z"),                                    "[a\\-z]");
-        assertSource(RE.matching.oneOf("^[]"),                                    "[\\^\\[\\]]");
-        assertSource(RE.matching.oneOf("abc").and("de"),                          "[abcde]");
-        assertSource(RE.matching.oneOf.digit.and.whiteSpace,                    "[\\d\\s]");
-        assertSource(RE.matching.oneOf.digit,                                   "[\\d]");
-        assertSource(RE.matching.oneOf.ascii(240).and.unicode(0xca0),             "[\\xf0\\u0ca0]");
-        assertSource(RE.matching.oneOf.backspace.and.newLine.and("abc"),          "[\\b\\nabc]");
-        assertSource(RE.matching.oneOf.range("a", "z"),                        "[a-z]");
+        assertSource(RE.matching.oneOf("abc"),                           "[abc]");
+        assertSource(RE.matching.oneOf("a-z"),                           "[a\\-z]");
+        assertSource(RE.matching.oneOf("^[]"),                           "[\\^\\[\\]]");
+        assertSource(RE.matching.oneOf("abc").and("de"),                 "[abcde]");
+        assertSource(RE.matching.oneOf.digit.and.whiteSpace,             "[\\d\\s]");
+        assertSource(RE.matching.oneOf.digit,                            "[\\d]");
+        assertSource(RE.matching.oneOf.ascii(240).and.unicode(0xca0),    "[\\xf0\\u0ca0]");
+        assertSource(RE.matching.oneOf.backspace.and.newLine.and("abc"), "[\\b\\nabc]");
+        assertSource(RE.matching.not.oneOf("abc"),                       "[^abc]");
+        assertSource(RE.matching.not.oneOf.not.digit,                    "[^\\D]");
+        assertSource(RE.matching.oneOf("abc").then.digit,                "[abc]\\d");
+        assertSource(RE.matching.oneOf.not.digit.then.digit,             "[\\D]\\d");
+    });
+
+    it("Character set ranges", function() {
+        assertSource(RE.matching.oneOf.range("a", "z"),                     "[a-z]");
         assertSource(RE.matching.oneOf.range("a", "z").and.range("0", "9"), "[a-z0-9]");
-        assertSource(RE.matching.not.oneOf("abc"),                                "[^abc]");
-        assertSource(RE.matching.not.oneOf.not.digit,                           "[^\\D]");
-        assertSource(RE.matching.oneOf("abc").then.digit,                       "[abc]\\d");
-        assertSource(RE.matching.oneOf.not.digit.then.digit,                  "[\\D]\\d");
+        assertSource(RE.matching.oneOf.range(RE.ascii(128), RE.ascii(255)), "[\\x80-\\xff]");
+        assertSource(RE.matching.oneOf.range("z", RE.unicode(0x2001)),      "[z-\\u2001]");
+        assertSource(RE.matching.oneOf.range(RE.null, RE.control("M")),     "[\\0-\\cM]");
+        assertSource(RE.matching.oneOf.range(RE.tab, RE.cReturn),           "[\\t-\\r]");
+        assertSource(RE.matching.oneOf.range(RE.newLine, RE.vTab),          "[\\n-\\v]");
+        assertSource(RE.matching.oneOf.range(RE.slash, RE.backslash),       "[\\/-\\\\]");
     });
 
     it("String boundaries", function() {
         assertSource(RE.matching.theStart.then.digit, "^\\d");
-        assertSource(RE.matching("abc").then.theEnd,    "abc$");        
+        assertSource(RE.matching("abc").then.theEnd,  "abc$");        
     });
 
     it("Capturing and non-capturing groups", function() {
         assertSource(RE.matching.group("abc"),               "(?:abc)");
-        assertSource(RE.matching.group(RE.digit),          "(?:\\d)");
+        assertSource(RE.matching.group(RE.digit),            "(?:\\d)");
         assertSource(RE.matching.group("a", /b/, RE("c")),   "(?:abc)");
         assertSource(RE.matching.capture("abc"),             "(abc)");
-        assertSource(RE.matching.capture(RE.digit),        "(\\d)");
+        assertSource(RE.matching.capture(RE.digit),          "(\\d)");
         assertSource(RE.matching.capture("a", /b/, RE("c")), "(abc)");
     });
 
@@ -137,16 +148,16 @@ describe("RE-Build'ers", function() {
         assertSource(RE.matching.exactly(4)("a"),    "a{4}");
         assertSource(RE.matching.between(2, 4)("a"), "a{2,4}");
         
-        assertSource(RE.matching.oneOrMore("abc"),                               "(?:abc)+");
-        assertSource(RE.matching.oneOrMore.digit,                              "\\d+");
-        assertSource(RE.matching.oneOrMore.oneOf("abc"),                         "[abc]+");
-        assertSource(RE.matching.oneOrMore.oneOf.range("a", "z"),             "[a-z]+");
+        assertSource(RE.matching.oneOrMore("abc"),                          "(?:abc)+");
+        assertSource(RE.matching.oneOrMore.digit,                           "\\d+");
+        assertSource(RE.matching.oneOrMore.oneOf("abc"),                    "[abc]+");
+        assertSource(RE.matching.oneOrMore.oneOf.range("a", "z"),           "[a-z]+");
         assertSource(RE.matching.oneOrMore.oneOf.range("a", "z").and.digit, "[a-z\\d]+");
-        assertSource(RE.matching.oneOrMore.group("abc"),                         "(?:abc)+");
-        assertSource(RE.matching.oneOrMore.capture("abc"),                       "(abc)+");
-        assertSource(RE.matching.oneOrMore.capture("a)(b"),                      "(a\\)\\(b)+");
-        assertSource(RE.matching.oneOrMore(/(ab)(cd)/),                          "(?:(ab)(cd))+");
-        assertSource(RE.matching.oneOrMore(/(ab(cd))/),                          "(ab(cd))+");
+        assertSource(RE.matching.oneOrMore.group("abc"),                    "(?:abc)+");
+        assertSource(RE.matching.oneOrMore.capture("abc"),                  "(abc)+");
+        assertSource(RE.matching.oneOrMore.capture("a)(b"),                 "(a\\)\\(b)+");
+        assertSource(RE.matching.oneOrMore(/(ab)(cd)/),                     "(?:(ab)(cd))+");
+        assertSource(RE.matching.oneOrMore(/(ab(cd))/),                     "(ab(cd))+");
     });
 
     it("Lazy quantifiers", function() {
@@ -161,16 +172,16 @@ describe("RE-Build'ers", function() {
         assertSource(RE.matching.lazily.exactly(4)("a"),    "a{4}?");
         assertSource(RE.matching.lazily.between(2, 4)("a"), "a{2,4}?");
         
-        assertSource(RE.matching.lazily.oneOrMore("abc"),                               "(?:abc)+?");
-        assertSource(RE.matching.lazily.oneOrMore.digit,                              "\\d+?");
-        assertSource(RE.matching.lazily.oneOrMore.oneOf("abc"),                         "[abc]+?");
-        assertSource(RE.matching.lazily.oneOrMore.oneOf.range("a", "z"),             "[a-z]+?");
+        assertSource(RE.matching.lazily.oneOrMore("abc"),                          "(?:abc)+?");
+        assertSource(RE.matching.lazily.oneOrMore.digit,                           "\\d+?");
+        assertSource(RE.matching.lazily.oneOrMore.oneOf("abc"),                    "[abc]+?");
+        assertSource(RE.matching.lazily.oneOrMore.oneOf.range("a", "z"),           "[a-z]+?");
         assertSource(RE.matching.lazily.oneOrMore.oneOf.range("a", "z").and.digit, "[a-z\\d]+?");
-        assertSource(RE.matching.lazily.oneOrMore.group("abc"),                         "(?:abc)+?");
-        assertSource(RE.matching.lazily.oneOrMore.capture("abc"),                       "(abc)+?");
-        assertSource(RE.matching.lazily.oneOrMore.capture("a)(b"),                      "(a\\)\\(b)+?");
-        assertSource(RE.matching.lazily.oneOrMore(/(ab)(cd)/),                          "(?:(ab)(cd))+?");
-        assertSource(RE.matching.lazily.oneOrMore(/(ab(cd))/),                          "(ab(cd))+?");
+        assertSource(RE.matching.lazily.oneOrMore.group("abc"),                    "(?:abc)+?");
+        assertSource(RE.matching.lazily.oneOrMore.capture("abc"),                  "(abc)+?");
+        assertSource(RE.matching.lazily.oneOrMore.capture("a)(b"),                 "(a\\)\\(b)+?");
+        assertSource(RE.matching.lazily.oneOrMore(/(ab)(cd)/),                     "(?:(ab)(cd))+?");
+        assertSource(RE.matching.lazily.oneOrMore(/(ab(cd))/),                     "(ab(cd))+?");
     });
 
     it("Look-aheads", function() {
