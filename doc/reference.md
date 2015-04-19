@@ -113,6 +113,8 @@ These words can be used in both "open" sequences or inside character sets. They 
 * **`vTab`** `\v`
 * **`formFeed`** `\f`
 * **`null`** `\0`
+* **`slash`** `\/`
+* **`backslash`** `\\`
 * **`ascii(code)`**
 
   An ASCII escape sequence (`\xhh`). `code` must be an integer between 0 and 255. It it then converted as two hexadecimal digits in the sequence.

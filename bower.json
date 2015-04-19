@@ -1,0 +1,30 @@
+{
+  "name": "re-build",
+  "main": "re-build.js",
+  "version": "0.0.1",
+  "homepage": "https://github.com/MaxArt2501/re-build",
+  "authors": [
+    "Massimo Artizzu <maxart.x@gmail.com>"
+  ],
+  "description": "Building regular expressions with natural language",
+  "moduleType": [
+    "amd",
+    "globals",
+    "node"
+  ],
+  "keywords": [
+    "regex",
+    "regular-expression",
+    "regexp",
+    "composition",
+    "builder"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

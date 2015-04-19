@@ -101,6 +101,8 @@ Name           | Result       | Notes
 `vTab`         | `\v`         | vertical tab
 `formFeed`     | `\f`         |
 `null`         | `\0`         |
+`slash`        | `\/`         |
+`backslash`    | `\\`         |
 `backspace`    | `\b`         | can be used in character sets `[...]' *only*
 
 The first four names can be negated prefixing them with `not` to get the complementary meaning:
