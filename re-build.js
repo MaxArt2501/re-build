@@ -1,9 +1,9 @@
 /*!
  * RE-Build - v0.0.1
  * by Massimo Artizzu (MaxArt2501)
- * 
+ *
  * https://github.com/MaxArt2501/re-build
- * 
+ *
  * Licensed under the MIT License
  * See LICENSE for details
  */
@@ -24,11 +24,24 @@
 })(this, function() {
     "use strict";
 
-    var flags = [ "global", "ignoreCase", "multiline", "sticky" ],
+    var flags = [ "global", "ignoreCase", "multiline", "unicode", "sticky" ],
         settingList = flags.concat([ "min", "max", "lazy", "negate" ]);
 
     var /** @const */ NOQUANTIFY = 1,
         /** @const */ NOSETS = 2;
+
+    var getCodePointAt = "".codePointAt ? function(string, index) {
+        return string.codePointAt(index);
+    } : function(string, index) {
+        var code = string.charCodeAt(index);
+        if (code >= 0xd800 && code <= 0xdbff) {
+            var surr = string.charCodeAt(index + 1);
+            if (surr >= 0xdc00 && surr <= 0xdfff)
+                code = 0x10000 + ((code - 0xd800) << 10) + (surr - 0xdc00);
+        }
+
+        return code;
+    };
 
     var names = {
         digit: ["\\d", "\\D"],
@@ -57,13 +70,30 @@
 
             return "\\x" + ("0" + code.toString(16)).slice(-2);
         }],
-        unicode: [function(code) {
-            if (typeof code === "string" && code.length === 1)
-                code = code.charCodeAt(0);
-            else if (typeof code !== "number" || code !== code | 0 || code < 0 || code > 0xffff)
-                throw new RangeError("Invalid character code");
+        codePoint: [function() {
+            var source = "",
+                unicode = this.unicode;
 
-            return "\\u" + ("000" + code.toString(16)).slice(-4);
+                debugger;
+            for (var i = 0, j = 0; i < arguments.length; i++) {
+                var arg = arguments[i], code;
+                if (typeof arg === "string") {
+                    code = unicode ? getCodePointAt(arg, j) : arg.charCodeAt(j);
+                    j += code > 0xffff ? 2 : 1;
+                    if (j < arg.length) i--;
+                    else j = 0;
+                } else code = arg|0;
+
+                if (code < 0 || code > (unicode ? 0x10ffff : 0xffff)) {
+                    if (code > 0xffff && code <= 0x10ffff)
+                        code += ". For code points in the range U+10000-U+10FFFF, use the `unicode` flag (`.withUnicode` modifier)"
+                    throw new RangeError("Invalid code point " + code);
+                }
+
+                source += "\\u" + (code > 0xffff ? "{" + code.toString(16) + "}" : ("000" + code.toString(16)).slice(-4));
+            }
+
+            return source;
         }],
         control: [function(letter) {
             if (!/^[a-zA-Z]$/.test(letter))
@@ -105,6 +135,7 @@
                         global: ~flags.indexOf("g"),
                         ignoreCase: ~flags.indexOf("i"),
                         multiline: ~flags.indexOf("m"),
+                        unicode: ~flags.indexOf("u"),
                         sticky: ~flags.indexOf("y")
                     }
                 else if (typeof flags === "object")
@@ -125,6 +156,7 @@
         global: "globally",
         ignoreCase: "anyCase",
         multiline: "fullText",
+        unicode: "withUnicode",
         sticky: "stickily"
     });
 
@@ -228,8 +260,8 @@
                     return buildBuilder(new RegExpBuilder(getFlags(this), source), [ thenable ]);
                 }
             };
-        
-        if (!(def[2] && NOSETS)) {
+
+        if (!(def[2] & NOSETS)) {
             if (typeof def[0] === "string") {
                 settable[name] = function() {
                     var source = this.source,
@@ -363,7 +395,7 @@
             else if (min === 1)
                 quantifier = max === Infinity ? "+" : "{1," + max + "}";
             else quantifier = "{" + min + "," + (max === Infinity ? "" : max) + "}";
- 
+
             if (quantifier) {
                 if ((source.length > 2 || source.length === 2 && source[0] !== "\\") && hasManyBlocks(source))
                     source = "(?:" + source + ")";
@@ -453,7 +485,8 @@
 
         var regex,
             flags = (settings.global ? "g" : "") + (settings.ignoreCase ? "i" : "")
-                    + (settings.multiline ? "m" : "") + (settings.sticky ? "y" : "");
+                    + (settings.multiline ? "m" : "") + (settings.unicode ? "u" : "")
+                    + (settings.sticky ? "y" : "");
 
         setConsts(this, {
             global: settings.global,
@@ -491,7 +524,7 @@
     }
 
     buildBuilder(initFunc(RE,
-        { global: false, ignoreCase: false, multiline: false, sticky: false }),
+        { global: false, ignoreCase: false, multiline: false, unicode: false, sticky: false }),
         [ openable, flagger, matcher ]);
 
     return RE;
