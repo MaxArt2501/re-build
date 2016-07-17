@@ -13,10 +13,11 @@ Type    | Name         | Description
 -------:|--------------|-------------
 string  | `regex`      | The regular expression defined by the builder. It's compiled the first time the property is requested, then cached
 string  | `source`     | The source of the underlying regular expression. Used to compile it
-string  | `flags`      | A string comprising the regex' flags. It may include one or more of the letters `"g"`, `"m"`, `"i"` or `"y"`
+string  | `flags`      | A string comprising the regex' flags. It may include one or more of the letters `"g"`, `"m"`, `"i"`, `"u"` or `"y"`
 boolean | `global`     | The regex' `global` flag
 boolean | `ignoreCase` | The regex' `ignoreCase` flag
 boolean | `multiline`  | The regex' `multiline` flag
+boolean | `unicode`    | The regex' `unicode` flag
 boolean | `sticky`     | The regex' `sticky` flag
 
 ## Methods
@@ -75,6 +76,10 @@ The flags of a builder (and its underlying regular expression) can be set using 
 
   Set the `sticky` flag on.
 
+* **`withUnicode`**
+
+  Set the `unicode` flag on.
+
 * **`withFlags(flags)`**
 
   Set multiple flags. `flags` is expected to be a string containing letters in the set `"g"`, `"m"`, `"i"` and `"y"`.
@@ -86,7 +91,7 @@ Conjunctions append additional blocks to the current source. They can follow any
 * **`then`**
 
   Appends a block to the current source.
-  
+
 * **`or`**
 
   Adds an alternative block (prefixed by the pipe `|` character in regular expressions).
@@ -106,7 +111,6 @@ These words can be used in both "open" sequences or inside character sets. They 
 * **`whiteSpace` / `not.whisteSpace`**
 
   A whitespace (`\s`) or its negation (`\W`).
-
 * **`cReturn`** `\r`
 * **`newLine`** `\n`
 * **`tab`** `\t`
@@ -119,9 +123,9 @@ These words can be used in both "open" sequences or inside character sets. They 
 
   An ASCII escape sequence (`\xhh`). `code` must be an integer between 0 and 255. It it then converted as two hexadecimal digits in the sequence.
 
-* **`unicode(code)`**
+* **`codePoint(code, ...)`**
 
-  An Unicode escape sequence (`\uhhhh`). `code` must be an integer between 0 and 65535 (`0xffff`). It it then converted as four hexadecimal digits in the sequence.
+  An Unicode escape sequence (`\uhhhh`, or `\u{hhhhh}` with the `unicode` flag set and with a code not from the [Basic Multilingual Plane](https://en.wikipedia.org/wiki/Plane_(Unicode))). `code` must be an integer between 0 and 65535 (`0xffff`) or 1114111 (`0x10ffff`) with the `unicode` flag on - or a `RangeError` will be thrown; or it can be a string, whose code points will be converted in the corresponding Unicode escape sequence. Keep in mind that code points from astral planes, when the `unicode` flag is *not* set, are encoded in the corresponding surrogate code point pairs (e.g.: `"🍰"` will become `"\ud83c\udf70"`).
 
 * **`control(letter)`**
 
@@ -138,7 +142,7 @@ These words can be used in open block sequences only (which means, not inside ch
 * **`theStart` / `theEnd`**
 
   The string-start and string-end boundaries (`^` and `$`, respectively).
-  
+
 * **`wordBoundary` / `not.wordBoundary`**
 
   A word boundary (`\b`) or its negation (`\B`).
@@ -158,7 +162,7 @@ These words can be used in open block sequences only (which means, not inside ch
 * **`reference(number)`**
 
   Group backreference (`\number`). `number` should be a positive integer.
-  
+
 ## Character sets
 
 Character sets are introduced by the `oneOf` word, and may include one or more blocks separated by the `and` word (e.g.: `RE.oneOf.digit.and("abcdef")`).
@@ -182,8 +186,8 @@ They can be prefixed by `lazily` to define a lazy quantifier, instead of a greed
 Quantifiers can be used as functions, and accept strings, regexes or builders as arguments. A convenient group wrap will be used if necessary:
 
 ```js
-var foo = RE.oneOrMore("a"),   // /a+/
-    bar = RE.oneOrMore("abc"); // /(?:abc)+/
+var foo = RE.oneOrMore("a");   // /a+/
+var bar = RE.oneOrMore("abc"); // /(?:abc)+/
 ```
 
 * **`anyAmountOf`** `*`
@@ -211,5 +215,5 @@ var foo = RE.oneOrMore("a"),   // /a+/
 * **`followedBy(...)` / `not.followedBy(...)`**
 
   Appends a look-ahead (`(?=...)` or `(?!...)`, respectively). Used as functions only. Arguments can be strings, regexes or builders.
-  
+
   Can follow any open block, or the `matching` word, or the `RE` object itself, or the `or` conjunction.

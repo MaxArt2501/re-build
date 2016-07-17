@@ -34,13 +34,13 @@ Another module for the same purpose is [VerbalExpressions](https://github.com/Ve
 
 ## Installation
 
-Via `npm` (coming very soon):
+Via `npm`:
 
 ```bash
 npm install re-build
 ```
 
-Via `bower` (coming very soon):
+Via `bower`:
 
 ```bash
 bower install re-build
@@ -61,6 +61,7 @@ For a detailed documentation, check the [reference sheet](doc/reference.md). Kee
 The *core* point is the `RE` object (or whatever variable name you assigned to it), together with the `matching` method:
 
 ```js
+var RE = require("re-build");
 var builder = RE.matching("xyz");
 ```
 
@@ -74,12 +75,22 @@ var foo = RE.matching(builder).then.oneOrMore.digit.regex; // /xyz\d+/
 
 As you can see, you can put additional matching blocks using the `then` word, which is also a function that can take arguments as blocks to add too. The arguments can be strings (which are backslash-escaped), regular expressions or RE-Build'ers, whose `source` property is added to the builder *unescaped*.
 
-The `or` word has a similar meaning, but add an alternative block to the source:
+The `or` word has a similar meaning, but adds an alternative block to the source:
 
 ```js
 var hex = RE.matching.digit
             .or.oneOf.range("A", "F")
             .regex;  // /\d|[A-F]/
+```
+
+### Regex builders are immutable
+
+Regular expression builders are immutable objects, meaning that when extending a builder we get a new builder instance:
+
+```js
+var bld1 = RE.matching.digit;
+var bld2 = bld1.or.oneOf.range("A", "F");
+bld1 === bld2; // => false
 ```
 
 ### Special classes, aliases and escaping
@@ -114,11 +125,11 @@ The first four names can be negated prefixing them with `not` to get the complem
 
 Single characters can be defined by escape sequences:
 
-Function     | Result   | Meaning
--------------|----------|-----------
-`ascii(n)`   | `\xhh`   | ASCII character corrisponding to `n`
-`unicode(n)` | `\uhhhh` | Unicode character  corrisponding to `n`
-`control(a)` | `\ca`    | Control sequence corrisponding to the letter `a`
+Function       | Result   | Meaning
+---------------|----------|-----------
+`ascii(n)`     | `\xhh`   | ASCII character corrisponding to `n`
+`codePoint(n)` | `\uhhhh` / `\u{hhhhhh}` | Unicode character  corrisponding to `n`
+`control(a)`   | `\ca`    | Control sequence corrisponding to the letter `a`
 
 With the exception of `wordBoundary`, `theStart` and `theEnd`, all of the previous words can be used inside character sets (see after).
 
@@ -129,7 +140,8 @@ You can set the flags of the regex prefixing `matching` with one or more of the 
 * `globally` for a global regex;
 * `anyCase` for a case-insensitive regex;
 * `fullText` for a "multiline" regex (i.e., the dot '`.`' matches new line characters too);
-* `stickily` for a "sticky" regex (Gecko's exclusive so far).
+* `withUnicode` for a regex with extended Unicode support;
+* `stickily` for a "sticky" regex.
 
 Alternatively, you can set the flags with the `withFlags` method of the `RE` object.
 
@@ -251,9 +263,9 @@ var foo = RE("a").or.not.followedBy("b").then("c");
 * Safari 5+
 * Chrome
 * Opera 11.60+
-* node.js, io.js
+* node.js
 
-Basically, every Javascript environment that supports [`Object.defineProperties`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperties) should be fine. Support for older browser versions is in development, with a slightly different syntax.
+Basically, every Javascript environment that supports [`Object.defineProperties`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperties) should be fine.
 
 ## Tests
 
@@ -263,8 +275,6 @@ If mocha is installed globally, served side tests can be run with just the comma
 
 ## To do
 
-* IE8- support
-* Caching regexes and builders
 * More natural language alternatives
 * Plurals, articles
 * CLI tool to translate regexes to and from RE-Build's syntax
@@ -272,4 +282,4 @@ If mocha is installed globally, served side tests can be run with just the comma
 
 ## License
 
-MIT @ Massimo Artizzu 2015. See [LICENSE](LICENSE).
+MIT @ Massimo Artizzu 2015-2016. See [LICENSE](LICENSE).
