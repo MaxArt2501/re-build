@@ -1,6 +1,6 @@
 {
   "name": "re-build",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Building regular expressions with natural language",
   "main": "re-build.js",
   "directories": {

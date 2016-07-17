@@ -1,5 +1,5 @@
 /*!
- * RE-Build - v0.0.1
+ * RE-Build - v1.0.0
  * by Massimo Artizzu (MaxArt2501)
  *
  * https://github.com/MaxArt2501/re-build
