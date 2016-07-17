@@ -39,15 +39,15 @@ describe("RE-Build'ers", function() {
     });
 
     it("Flags", function() {
-        assertFlags(RE.matching("abc"),          "");
-        assertFlags(RE.globally.matching("abc"), "g");
-        assertFlags(RE.anyCase.matching("abc"),  "i");
-        assertFlags(RE.fullText.matching("abc"), "m");
-        if ("sticky" in /a/)
-            assertFlags(RE.stickily.matching("abc"), "y");
+        assertFlags(RE.matching("abc"),             "");
+        assertFlags(RE.globally.matching("abc"),    "g");
+        assertFlags(RE.anyCase.matching("abc"),     "i");
+        assertFlags(RE.fullText.matching("abc"),    "m");
+        assertFlags(RE.withUnicode.matching("abc"), "u");
+        assertFlags(RE.stickily.matching("abc"),    "y");
         assertFlags(RE.globally.anyCase.fullText.matching("abc"), "gim");
         assertFlags(RE.withFlags("img").matching("abc"),          "gim");
-        
+
         // Cloning a builder with different flags
         var builder = RE.matching.oneOrMore.digit,
             other = RE.globally.matching(builder);
@@ -77,10 +77,14 @@ describe("RE-Build'ers", function() {
     });
 
     it("Character escaping", function() {
-        assertSource(RE.matching.ascii(160),      "\\xa0");
-        assertSource(RE.matching.ascii(0x41),     "\\x41");
-        assertSource(RE.matching.unicode(0x25bc), "\\u25bc");
-        assertSource(RE.matching.control("M"),    "\\cM");
+        assertSource(RE.matching.ascii(160),        "\\xa0");
+        assertSource(RE.matching.ascii(0x41),       "\\x41");
+        assertSource(RE.matching.codePoint(0x2661), "\\u2661");
+        assertSource(RE.matching.codePoint("♡"),    "\\u2661");
+        assertSource(RE.matching.codePoint("I♡🍰"), "\\u0049\\u2661\\ud83c\\udf70");
+        assertSource(RE.matching.control("M"),      "\\cM");
+        assertSource(RE.withUnicode.matching.codePoint(0x1f370), "\\u{1f370}");
+        assertSource(RE.withUnicode.matching.codePoint("I♡🍰"), "\\u0049\\u2661\\u{1f370}");
     });
 
     it("Concatenation of sequences and blocks", function() {
@@ -98,7 +102,7 @@ describe("RE-Build'ers", function() {
         assertSource(RE.matching.oneOf("abc").and("de"),                 "[abcde]");
         assertSource(RE.matching.oneOf.digit.and.whiteSpace,             "[\\d\\s]");
         assertSource(RE.matching.oneOf.digit,                            "[\\d]");
-        assertSource(RE.matching.oneOf.ascii(240).and.unicode(0xca0),    "[\\xf0\\u0ca0]");
+        assertSource(RE.matching.oneOf.ascii(240).and.codePoint(0xca0),  "[\\xf0\\u0ca0]");
         assertSource(RE.matching.oneOf.backspace.and.newLine.and("abc"), "[\\b\\nabc]");
         assertSource(RE.matching.not.oneOf("abc"),                       "[^abc]");
         assertSource(RE.matching.not.oneOf.not.digit,                    "[^\\D]");
@@ -110,7 +114,7 @@ describe("RE-Build'ers", function() {
         assertSource(RE.matching.oneOf.range("a", "z"),                     "[a-z]");
         assertSource(RE.matching.oneOf.range("a", "z").and.range("0", "9"), "[a-z0-9]");
         assertSource(RE.matching.oneOf.range(RE.ascii(128), RE.ascii(255)), "[\\x80-\\xff]");
-        assertSource(RE.matching.oneOf.range("z", RE.unicode(0x2001)),      "[z-\\u2001]");
+        assertSource(RE.matching.oneOf.range("z", RE.codePoint(0x2001)),    "[z-\\u2001]");
         assertSource(RE.matching.oneOf.range(RE.null, RE.control("M")),     "[\\0-\\cM]");
         assertSource(RE.matching.oneOf.range(RE.tab, RE.cReturn),           "[\\t-\\r]");
         assertSource(RE.matching.oneOf.range(RE.newLine, RE.vTab),          "[\\n-\\v]");
@@ -119,7 +123,7 @@ describe("RE-Build'ers", function() {
 
     it("String boundaries", function() {
         assertSource(RE.matching.theStart.then.digit, "^\\d");
-        assertSource(RE.matching("abc").then.theEnd,  "abc$");        
+        assertSource(RE.matching("abc").then.theEnd,  "abc$");
     });
 
     it("Capturing and non-capturing groups", function() {
@@ -147,7 +151,7 @@ describe("RE-Build'ers", function() {
         assertSource(RE.matching.atMost(2)("a"),     "a{,2}");
         assertSource(RE.matching.exactly(4)("a"),    "a{4}");
         assertSource(RE.matching.between(2, 4)("a"), "a{2,4}");
-        
+
         assertSource(RE.matching.oneOrMore("abc"),                          "(?:abc)+");
         assertSource(RE.matching.oneOrMore.digit,                           "\\d+");
         assertSource(RE.matching.oneOrMore.oneOf("abc"),                    "[abc]+");
@@ -171,7 +175,7 @@ describe("RE-Build'ers", function() {
         assertSource(RE.matching.lazily.atMost(2)("a"),     "a{,2}?");
         assertSource(RE.matching.lazily.exactly(4)("a"),    "a{4}?");
         assertSource(RE.matching.lazily.between(2, 4)("a"), "a{2,4}?");
-        
+
         assertSource(RE.matching.lazily.oneOrMore("abc"),                          "(?:abc)+?");
         assertSource(RE.matching.lazily.oneOrMore.digit,                           "\\d+?");
         assertSource(RE.matching.lazily.oneOrMore.oneOf("abc"),                    "[abc]+?");
@@ -202,7 +206,7 @@ describe("RE-Build'ers", function() {
             ).then.theEnd,
             "^(?:[01]\\d|2[0-3])(?::[0-5]\\d){2}$"
         );
-        
+
         // Matching HTML/XML attributes (sort of)
         assertBuilder(
             RE.globally.anyCase.matching.whiteSpace
@@ -212,7 +216,7 @@ describe("RE-Build'ers", function() {
                 .then.lazily.anyAmountOf.anyChar.then.reference(1),
             "\\s[a-z]\\w*\\s*=\\s*(['\"]).*?\\1", "gi"
         );
-        
+
         // Matching CSS colors
         var spaces = RE.anyAmountOf(" "),
             comma = RE(spaces).then(",").then(spaces),
@@ -278,7 +282,7 @@ describe("Builder prototype", function() {
                             .then.capture(RE.exactly(2).digit).then("-")
                             .then.capture(RE.exactly(2).digit);
         assert(reverseDate.replace("2015-04-20", "$3/$2/$1"), "20/04/2015");
-        
+
         var capital = RE.globally.matching.wordBoundary.then.oneOrMore.alphaNumeric;
         assert(capital.replace("hello, world!", function(m) {
             return m.charAt(0).toUpperCase() + m.substring(1);
