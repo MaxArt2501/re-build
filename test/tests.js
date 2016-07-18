@@ -77,14 +77,28 @@ describe("RE-Build'ers", function() {
     });
 
     it("Character escaping", function() {
-        assertSource(RE.matching.ascii(160),        "\\xa0");
-        assertSource(RE.matching.ascii(0x41),       "\\x41");
-        assertSource(RE.matching.codePoint(0x2661), "\\u2661");
-        assertSource(RE.matching.codePoint("♡"),    "\\u2661");
-        assertSource(RE.matching.codePoint("I♡🍰"), "\\u0049\\u2661\\ud83c\\udf70");
-        assertSource(RE.matching.control("M"),      "\\cM");
+        assertSource(RE.matching.control("M"),       "\\cM");
+        assertSource(RE.matching.ascii(160),         "\\xa0");
+        assertSource(RE.matching.ascii("ABC"),       "\\x41\\x42\\x43");
+        assertSource(RE.matching.codePoint(0x2661),  "\\u2661");
+        assertSource(RE.matching.codePoint("♡"),     "\\u2661");
+        assertSource(RE.matching.codePoint(0x1f370), "\\ud83c\\udf70");
+        assertSource(RE.matching.codePoint("I♡🍰"),  "\\u0049\\u2661\\ud83c\\udf70");
         assertSource(RE.withUnicode.matching.codePoint(0x1f370), "\\u{1f370}");
-        assertSource(RE.withUnicode.matching.codePoint("I♡🍰"), "\\u0049\\u2661\\u{1f370}");
+        assertSource(RE.withUnicode.matching.codePoint("I♡🍰"),  "\\u0049\\u2661\\u{1f370}");
+
+        try {
+            RE.matching.ascii("♡");
+            throw new Error("Expected RangeError");
+        } catch (e) {
+            assert(e.name, "RangeError");
+        }
+        try {
+            RE.matching.codePoint(0x200000);
+            throw new Error("Expected RangeError");
+        } catch (e) {
+            assert(e.name, "RangeError");
+        }
     });
 
     it("Concatenation of sequences and blocks", function() {

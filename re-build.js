@@ -62,19 +62,27 @@
         theStart: ["^", "", NOQUANTIFY + NOSETS],
         theEnd: ["$", "", NOQUANTIFY + NOSETS],
 
-        ascii: [function(code) {
-            if (typeof code === "string" && code.length === 1)
-                code = code.charCodeAt(0);
-            if (typeof code !== "number" || code !== code | 0 || code < 0 || code > 255)
-                throw new RangeError("Invalid character code");
+        ascii: [function() {
+            var source = "";
+            for (var i = 0, j = 0; i < arguments.length; i++) {
+                var arg = arguments[i], code;
+                if (typeof arg === "string") {
+                    code = arg.charCodeAt(j++);
+                    if (j < arg.length) i--;
+                    else j = 0;
+                } else code = arg|0;
+                if (code < 0 || code > 255)
+                    throw new RangeError("Invalid character code");
 
-            return "\\x" + ("0" + code.toString(16)).slice(-2);
+                source += "\\x" + ("0" + code.toString(16)).slice(-2);
+            }
+
+            return source;
         }],
         codePoint: [function() {
             var source = "",
                 unicode = this.unicode;
 
-                debugger;
             for (var i = 0, j = 0; i < arguments.length; i++) {
                 var arg = arguments[i], code;
                 if (typeof arg === "string") {
@@ -84,10 +92,14 @@
                     else j = 0;
                 } else code = arg|0;
 
-                if (code < 0 || code > (unicode ? 0x10ffff : 0xffff)) {
-                    if (code > 0xffff && code <= 0x10ffff)
-                        code += ". For code points in the range U+10000-U+10FFFF, use the `unicode` flag (`.withUnicode` modifier)"
+                if (code < 0 || code > 0x10ffff)
                     throw new RangeError("Invalid code point " + code);
+                if (code > 0xffff && !unicode) {
+                    // Computing surrogate code points
+                    code -= 0x10000;
+                    // First surrogate is immediately added to the source
+                    source += "\\u" + (0xd800 + (code >> 10)).toString(16);
+                    code = 0xdc00 + (code & 0x3ff);
                 }
 
                 source += "\\u" + (code > 0xffff ? "{" + code.toString(16) + "}" : ("000" + code.toString(16)).slice(-4));
