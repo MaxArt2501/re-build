@@ -185,7 +185,7 @@
             return function(min, max) {
                 if (min != null && (isNaN(min) || Math.floor(min) !== +min || +min < 0)
                         || max != null && (isNaN(max) || Math.floor(max) !== +max || +max < 0))
-                    throw new RangeError("Positive integer expected");
+                    throw new RangeError("Non-negative integer expected");
 
                 if (min == null && max == null)
                     throw new RangeError("Range expected");
@@ -197,7 +197,7 @@
                 return buildBuilder(initFunc(function() {
                     return buildBuilder(new RegExpBuilder(getFlags(that),
                             source + wrapSource(parseArgs(arguments), settings)), [ thenable ]);
-                }, settings, source), [ openable, negator([ negable ]) ]);
+                }, settings, source), [ quantifiable, negator([ qntnegable ]) ]);
             };
         },
         exactly: function() {
@@ -254,7 +254,8 @@
     };
 
     var openable = {}, negable = {},
-        settable = {}, setnegable = {};
+        settable = {}, setnegable = {},
+        quantifiable = {}, qntnegable = {};
 
     Object.keys(names).forEach(function(name) {
         var def = names[name];
@@ -272,6 +273,10 @@
                     return buildBuilder(new RegExpBuilder(getFlags(this), source), [ thenable ]);
                 }
             };
+        if (!(def[2] & NOQUANTIFY)) {
+            quantifiable[name] = openable[name];
+            if (def[1]) qntnegable[name] = openable[name];
+        }
 
         if (!(def[2] & NOSETS)) {
             if (typeof def[0] === "string") {
@@ -293,7 +298,7 @@
                 };
         }
     });
-    openable.oneOf = negable.oneOf = function() {
+    openable.oneOf = negable.oneOf = quantifiable.oneOf = qntnegable.oneOf = function() {
         var that = this, source = this.source;
 
         return buildBuilder(initFunc(function() {
@@ -418,13 +423,13 @@
         return source;
     }
 
-    var setConsts = Object.defineProperties ? function(dest, consts) {
+    function setConsts(dest, consts) {
         var prop, map = {};
         for (prop in consts)
             map[prop] = { value: consts[prop], writable: false, configurable: false, enumerable: false };
 
         return Object.defineProperties(dest, map);
-    } : extend;
+    }
 
     function initFunc(fnc, consts, source) {
         consts.source = source || "";
@@ -478,16 +483,24 @@
     }
     function getFlags(object) { return getSettings(object, flags); }
 
+    /**
+     * RegExpBuilder factory function
+     */
     function buildBuilder(dest, bundles) {
-        var i = 0, bundle, prop;
+        var i = 0, bundle, prop, defs = {};
         while (i < bundles.length) {
             bundle = bundles[i++];
             for (prop in bundle) {
-                if (typeof bundle[prop] === "function")
-                    Object.defineProperty(dest, prop, { get: bundle[prop] });
-                else dest[prop] = bundle[prop];
+                defs[prop] = { configurable: false, enumerable: true };
+                if (typeof bundle[prop] === "function") {
+                    defs[prop].get = bundle[prop];
+                } else {
+                    defs[prop].value = bundle[prop];
+                    defs[prop].writable = false;
+                }
             }
         }
+        Object.defineProperties(dest, defs);
 
         return dest;
     }
