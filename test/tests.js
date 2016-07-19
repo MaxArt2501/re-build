@@ -88,6 +88,12 @@ describe("RE-Build'ers", function() {
         assertSource(RE.withUnicode.matching.codePoint("I♡🍰"),  "\\u0049\\u2661\\u{1f370}");
 
         try {
+            RE.matching.control("1");
+            throw new Error("Expected RangeError");
+        } catch (e) {
+            assert(e.name, "RangeError");
+        }
+        try {
             RE.matching.ascii("♡");
             throw new Error("Expected RangeError");
         } catch (e) {
@@ -107,6 +113,7 @@ describe("RE-Build'ers", function() {
         assertSource(RE.matching("abc").then.not.digit,       "abc\\D");
         assertSource(RE.matching.digit.then.digit,            "\\d\\d");
         assertSource(RE.matching("ab").then("cd").then("ef"), "abcdef");
+        assert("backspace" in RE.matching, false);
     });
 
     it("Character sets", function() {
@@ -122,6 +129,9 @@ describe("RE-Build'ers", function() {
         assertSource(RE.matching.not.oneOf.not.digit,                    "[^\\D]");
         assertSource(RE.matching.oneOf("abc").then.digit,                "[abc]\\d");
         assertSource(RE.matching.oneOf.not.digit.then.digit,             "[\\D]\\d");
+        assert("anyChar"      in RE.matching.oneOf, false);
+        assert("wordBoundary" in RE.matching.oneOf, false);
+        assert("theStart"     in RE.matching.oneOf, false);
     });
 
     it("Character set ranges", function() {
@@ -152,6 +162,12 @@ describe("RE-Build'ers", function() {
     it("Backreferences", function() {
         assertSource(RE.matching.capture(RE.oneOrMore.digit).then(" - ").then.reference(1).then(" = 0"), "(\\d+) - \\1 = 0");
         assertSource(RE.matching.capture(RE.oneOf("'\"")).then.oneOrMore.alphaNumeric.then.reference(1), "(['\"])\\w+\\1");
+        try {
+            RE.matching.reference(-1);
+            throw new Error("Expected RangeError");
+        } catch (e) {
+            assert(e.name, "RangeError");
+        }
     });
 
     it("Greedy quantifiers", function() {
@@ -161,10 +177,20 @@ describe("RE-Build'ers", function() {
         assertSource(RE.matching.atLeast(0)("a"),    "a*");
         assertSource(RE.matching.atLeast(1)("a"),    "a+");
         assertSource(RE.matching.atLeast(2)("a"),    "a{2,}");
+        assertSource(RE.matching.atMost(0)("a"),     "a{0}");
         assertSource(RE.matching.atMost(1)("a"),     "a?");
         assertSource(RE.matching.atMost(2)("a"),     "a{,2}");
+        assertSource(RE.matching.exactly(1)("a"),    "a");
         assertSource(RE.matching.exactly(4)("a"),    "a{4}");
+        assertSource(RE.matching.between(0)("a"),    "a*");
+        assertSource(RE.matching.between(1)("a"),    "a+");
+        assertSource(RE.matching.between(0, 1)("a"), "a?");
+        assertSource(RE.matching.between(null, 1)("a"), "a?");
         assertSource(RE.matching.between(2, 4)("a"), "a{2,4}");
+        assertSource(RE.matching.between(1, 1)("a"), "a");
+        assertSource(RE.matching.between(3, 3)("a"), "a{3}");
+        assertSource(RE.matching.between(3)("a"),    "a{3,}");
+        assertSource(RE.matching.between(null, 3)("a"), "a{,3}");
 
         assertSource(RE.matching.oneOrMore("abc"),                          "(?:abc)+");
         assertSource(RE.matching.oneOrMore.digit,                           "\\d+");
@@ -176,6 +202,33 @@ describe("RE-Build'ers", function() {
         assertSource(RE.matching.oneOrMore.capture("a)(b"),                 "(a\\)\\(b)+");
         assertSource(RE.matching.oneOrMore(/(ab)(cd)/),                     "(?:(ab)(cd))+");
         assertSource(RE.matching.oneOrMore(/(ab(cd))/),                     "(ab(cd))+");
+
+        try {
+            RE.matching.exactly(1.5)("a");
+            throw new Error("Expected RangeError");
+        } catch (e) {
+            assert(e.name, "RangeError");
+        }
+        try {
+            RE.matching.exactly(-1)("a");
+            throw new Error("Expected RangeError");
+        } catch (e) {
+            assert(e.name, "RangeError");
+        }
+        try {
+            RE.matching.between()("a");
+            throw new Error("Expected RangeError");
+        } catch (e) {
+            assert(e.name, "RangeError");
+        }
+
+        assert("digit"        in RE.matching.exactly(1), true);
+        assert("slash"        in RE.matching.exactly(1), true);
+        assert("oneOf"        in RE.matching.exactly(1), true);
+        assert("ascii"        in RE.matching.exactly(1), true);
+        assert("group"        in RE.matching.exactly(1), true);
+        assert("wordBoundary" in RE.matching.exactly(1), false);
+        assert("theStart"     in RE.matching.exactly(1), false);
     });
 
     it("Lazy quantifiers", function() {
@@ -317,9 +370,3 @@ describe("Builder prototype", function() {
 });
 
 });
-
-/*
-
-/\B#[\da-f]{3}(?:[\da-f]{3})?\b|\brgb\( *(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d?|0) *, *){2}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d?|0) *\)|\brgba\( *(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d?|0) *, *){3}(?:0?\.\d+|1) *\)|\bhsl\( *(?:35\d|3[0-4]\d|[12]\d\d|[1-9]\d?|0) *, *(?:[1-9]\d?|100|0)% *, *(?:[1-9]\d?|100|0)% *\)|\bhsla\( *(?:35\d|3[0-4]\d|[12]\d\d|[1-9]\d?|0) *, *(?:[1-9]\d?|100|0)% *, *(?:[1-9]\d?|100|0)% *, *(?:0?\.\d+|1) *\)/
-
-*/
