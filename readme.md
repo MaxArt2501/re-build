@@ -32,6 +32,8 @@ This approach is definitely more verbose, but also much clearer and less error p
 
 Another module for the same purpose is [VerbalExpressions](https://github.com/VerbalExpressions/JSVerbalExpressions), but it doesn't allow to build just *any* regular expression. RE-Build aims to fill that gap too.
 
+Remember, as a general rule, that RE-Build does *not* care if your environment doesn't support certain `RegExp` features (for example, the `sticky` flag or extended Unicode escaping sequences), as the corresponding source code will be generated anyway. Of course, you'll get an error trying to get a `RegExp` object out of it.
+
 ## Installation
 
 Via `npm`:
@@ -151,7 +153,7 @@ var foo = RE.globally.anyCase.matching.oneOf.range("a", "f").regex;
 var bar = RE.withFlags("gi").matching.oneOf.range("a", "f").regex;
 ```
 
-You can't change a regex builder's flags, but you can create a copy of a builder with different flags:
+You can't change a regex builder's flags, as builders are immutable, but you can create a copy of a builder with different flags:
 
 ```js
 var foo = RE.matching.oneOrMore.alphaNumeric;  // /\w+/

@@ -125,7 +125,7 @@ These words can be used in both "open" sequences or inside character sets. They 
 
 * **`codePoint(code, ...)`**
 
-  An Unicode escape sequence (`\uhhhh`, or `\u{hhhhh}` with the `unicode` flag set and with a code not from the [Basic Multilingual Plane](https://en.wikipedia.org/wiki/Plane_(Unicode))). `code` must be an integer between 0 and 65535 (`0xffff`) or 1114111 (`0x10ffff`) with the `unicode` flag on - or a `RangeError` will be thrown; or it can be a string, whose code points will be converted in the corresponding Unicode escape sequence. Keep in mind that code points from astral planes, when the `unicode` flag is *not* set, are encoded in the corresponding surrogate code point pairs (e.g.: `"🍰"` will become `"\ud83c\udf70"`).
+  An Unicode escape sequence (`\uhhhh`, or `\u{hhhhh}` with the `unicode` flag set and with a code not from the [Basic Multilingual Plane](https://en.wikipedia.org/wiki/Plane_(Unicode))). `code` must be an integer between 0 and 1114111 (`0x10ffff`) or a `RangeError` will be thrown; or it can be a string, whose code points will be converted in the corresponding Unicode escape sequence. Keep in mind that code points from astral planes, when the `unicode` flag is *not* set, are encoded in the corresponding surrogate code point pairs (e.g.: `"🍰"` will become `"\ud83c\udf70"`): *it is your duty* to wrap the pairs in a group if needed or, when it's not possible (for example, in a character range) using an adequate regex structure.
 
 * **`control(letter)`**
 
