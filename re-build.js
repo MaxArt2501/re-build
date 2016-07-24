@@ -24,6 +24,19 @@
 })(this, function() {
     "use strict";
 
+    var O = Object;
+    var extend = O.assign || function(dest) {
+        for (var i = 1, source, prop; i < arguments.length;) {
+            source = arguments[i++];
+            if (source)
+                for (var prop in source)
+                    dest[prop] = source[prop];
+        }
+
+        return dest;
+    };
+    var defineProps = O.defineProperties;
+
     var flags = [ "global", "ignoreCase", "multiline", "unicode", "sticky" ],
         settingList = flags.concat([ "min", "max", "lazy", "negate" ]);
 
@@ -175,7 +188,7 @@
     var matcher = {
         matching: function() {
             return buildBuilder(initFunc(function() {
-                return buildBuilder(new RegExpBuilder(getFlags(this), parseArgs(arguments)), [ thenable ]);
+                return buildBuilder(createBuilder(getFlags(this), parseArgs(arguments)), [ thenable ]);
             }, getFlags(this)), [ openable, lookAheads, negator([ negable, lookAheads ]) ]);
         }
     };
@@ -195,7 +208,7 @@
                     settings = extend(getSettings(this), { min: min, max: max });
 
                 return buildBuilder(initFunc(function() {
-                    return buildBuilder(new RegExpBuilder(getFlags(that),
+                    return buildBuilder(createBuilder(getFlags(that),
                             source + wrapSource(parseArgs(arguments), settings)), [ thenable ]);
                 }, settings, source), [ quantifiable, negator([ qntnegable ]) ]);
             };
@@ -228,7 +241,7 @@
 
     var lazinator = {
         lazily: function() {
-            return buildBuilder(new RegExpBuilder(extend(getSettings(this), { lazy: true }), this.source), [ quantifiers ]);
+            return buildBuilder(createBuilder(extend(getSettings(this), { lazy: true }), this.source), [ quantifiers ]);
         }
     };
 
@@ -238,7 +251,7 @@
                 source = this.source;
 
             return buildBuilder(initFunc(function() {
-                return buildBuilder(new RegExpBuilder(settings,
+                return buildBuilder(createBuilder(settings,
                         source + parseArgs(arguments)), [ thenable ]);
             }, settings, source), [ openable, negator([ negable ]) ]);
         },
@@ -247,7 +260,7 @@
                 source = this.source + "|";
 
             return buildBuilder(initFunc(function() {
-                return buildBuilder(new RegExpBuilder(settings,
+                return buildBuilder(createBuilder(settings,
                         source + parseArgs(arguments)), [ thenable ]);
             }, settings, source), [ openable, lookAheads, negator([ negable, lookAheads ]) ]);
         }
@@ -257,20 +270,20 @@
         settable = {}, setnegable = {},
         quantifiable = {}, qntnegable = {};
 
-    Object.keys(names).forEach(function(name) {
+    O.keys(names).forEach(function(name) {
         var def = names[name];
 
         if (typeof def[0] === "string") {
             openable[name] = function() {
                 var source = this.source + wrapSource(this.negate && def[1] || def[0], this);
-                return buildBuilder(new RegExpBuilder(getFlags(this), source), [ thenable ]);
+                return buildBuilder(createBuilder(getFlags(this), source), [ thenable ]);
             };
             if (def[1]) negable[name] = openable[name];
         } else
             openable[name] = function() {
                 return function() {
                     var source = this.source + wrapSource(def[0].apply(this, arguments), this);
-                    return buildBuilder(new RegExpBuilder(getFlags(this), source), [ thenable ]);
+                    return buildBuilder(createBuilder(getFlags(this), source), [ thenable ]);
                 }
             };
         if (!(def[2] & NOQUANTIFY)) {
@@ -283,7 +296,7 @@
                 settable[name] = function() {
                     var source = this.source,
                         lastBracket = source.lastIndexOf("]");
-                    return buildBuilder(new RegExpBuilder(getFlags(this), source.slice(0, lastBracket)
+                    return buildBuilder(createBuilder(getFlags(this), source.slice(0, lastBracket)
                             + (this.negate && def[1] || def[0]) + source.slice(lastBracket)), [ thenable, andCharSet ]);
                 };
                 if (def[1]) setnegable[name] = settable[name];
@@ -292,7 +305,7 @@
                     return function() {
                         var source = this.source,
                             lastBracket = source.lastIndexOf("]");
-                        return buildBuilder(new RegExpBuilder(getFlags(this), source.slice(0, lastBracket)
+                        return buildBuilder(createBuilder(getFlags(this), source.slice(0, lastBracket)
                                 + def[0].apply(this, arguments) + source.slice(lastBracket)), [ thenable, andCharSet ]);
                     };
                 };
@@ -302,7 +315,7 @@
         var that = this, source = this.source;
 
         return buildBuilder(initFunc(function() {
-            return buildBuilder(new RegExpBuilder(getFlags(that), source
+            return buildBuilder(createBuilder(getFlags(that), source
                     + wrapSource((that.negate ? "[^" : "[") + parseSets(arguments) + "]", that)), [ andCharSet, thenable ]);
         }, getSettings(this), source + wrapSource(this.negate ? "[^]" : "[]", this)), [ settable ]);
     };
@@ -311,7 +324,7 @@
     settable.backspace = function() {
         var source = this.source,
             lastBracket = source.lastIndexOf("]");
-        return buildBuilder(new RegExpBuilder(getFlags(this), source.slice(0, lastBracket)
+        return buildBuilder(createBuilder(getFlags(this), source.slice(0, lastBracket)
                 + "\\b" + source.slice(lastBracket)), [ thenable, andCharSet ]);
     };
     settable.range = function() {
@@ -319,7 +332,7 @@
             if (typeof bnd === "string" && bnd.length === 1)
                 return parseSets(bnd);
 
-            if (bnd instanceof RegExpBuilder) {
+            if (isBuilder(bnd)) {
                 bnd = bnd.source;
                 if (bnd.length === 1 || /^\\(?:[0btnvfr\/\\]|x[\da-fA-F]{2}|u[\da-fA-F]{4}|c[a-zA-Z])$/.test(bnd))
                     return bnd;
@@ -333,7 +346,7 @@
 
             var source = this.source,
                 lastBracket = source.lastIndexOf("]");
-            return buildBuilder(new RegExpBuilder(getFlags(this), source.slice(0, lastBracket)
+            return buildBuilder(createBuilder(getFlags(this), source.slice(0, lastBracket)
                     + start + "-" + end + source.slice(lastBracket)),
                     [ thenable, andCharSet ]);
         };
@@ -346,7 +359,7 @@
 
             return buildBuilder(initFunc(function() {
                 var lastBracket = source.lastIndexOf("]");
-                return buildBuilder(new RegExpBuilder(flags, source.slice(0, lastBracket)
+                return buildBuilder(createBuilder(flags, source.slice(0, lastBracket)
                         + parseSets(arguments) + source.slice(lastBracket)), [ andCharSet, thenable ]);
             }, flags, source), [ settable ]);
         }
@@ -360,7 +373,7 @@
                 if (source.slice(0, 3) !== seq)
                     source = seq + source + ")";
 
-                return buildBuilder(new RegExpBuilder(getFlags(this), (this.source || "") + source), [ thenable ]);
+                return buildBuilder(createBuilder(getFlags(this), (this.source || "") + source), [ thenable ]);
             };
         }
     };
@@ -368,26 +381,8 @@
 
     function negator(bundles) {
         return { not: function() {
-            return buildBuilder(new RegExpBuilder(extend(getSettings(this), { negate: true }), this.source), bundles);
+            return buildBuilder(createBuilder(extend(getSettings(this), { negate: true }), this.source), bundles);
         } };
-    }
-
-    /**
-     * Merges the given objects into the destination
-     * @function
-     * @param {Object} dest
-     * @param {...Object} sources
-     * @returns {Object}           Equals dest
-     */
-    function extend(dest) {
-        for (var i = 1, source, prop; i < arguments.length;) {
-            source = arguments[i++];
-            if (source)
-                for (var prop in source)
-                    dest[prop] = source[prop];
-        }
-
-        return dest;
     }
 
     /**
@@ -423,12 +418,15 @@
         return source;
     }
 
-    function setConsts(dest, consts) {
-        var prop, map = {};
-        for (prop in consts)
-            map[prop] = { value: consts[prop], writable: false, configurable: false, enumerable: false };
+    function getConstMap(consts) {
+        var map = {};
+        for (var name in consts)
+            map[name] = { value: consts[name], writable: false, configurable: false };
 
-        return Object.defineProperties(dest, map);
+        return map;
+    }
+    function setConsts(dest, consts) {
+        return defineProps(dest, getConstMap(consts));
     }
 
     function initFunc(fnc, consts, source) {
@@ -444,7 +442,7 @@
             block = blocks[i++];
             if (typeof block === "string")
                 source += block.replace(this, "\\$&");
-            else if (block instanceof RegExp || block instanceof RegExpBuilder)
+            else if (block instanceof RegExp || isBuilder(block))
                 source += block.source;
         }
         return source;
@@ -500,20 +498,31 @@
                 }
             }
         }
-        Object.defineProperties(dest, defs);
 
-        return dest;
+        return defineProps(dest, defs);
     }
 
-    function RegExpBuilder(settings, source) {
+    var proto = {
+        valueOf: function() { return this.regex; },
+        toString: function() { return "/" + this.source + "/" + this.flags; },
+        test: function(string) { return this.regex.test(string); },
+        exec: function(string) { return this.regex.exec(string); },
+        replace: function(string, subs) { return string.replace(this.regex, subs); },
+        split: function(string) { return string.split(this.regex); },
+        search: function(string) { return string.search(this.regex); }
+    };
+    proto.toRegExp = proto.valueOf;
+
+    function getPropDefs(settings, source) {
         if (typeof source !== "string") source = "";
 
-        var regex,
-            flags = (settings.global ? "g" : "") + (settings.ignoreCase ? "i" : "")
-                    + (settings.multiline ? "m" : "") + (settings.unicode ? "u" : "")
-                    + (settings.sticky ? "y" : "");
+        var flags = (settings.global ? "g" : "")
+                + (settings.ignoreCase ? "i" : "")
+                + (settings.multiline ? "m" : "")
+                + (settings.unicode ? "u" : "")
+                + (settings.sticky ? "y" : "");
 
-        setConsts(this, {
+        var defs = getConstMap({
             global: settings.global,
             ignoreCase: settings.ignoreCase,
             multiline: settings.multiline,
@@ -525,27 +534,29 @@
             source: source,
             flags: flags
         });
-
-        Object.defineProperty(this, "regex", {
+        var regex;
+        defs.regex = {
             get: function() {
                 return regex || (regex = new RegExp(source, flags));
             },
-            enumerable: true, configurable: false
-        });
+            configurable: false
+        };
+
+        return defs;
+    }
+
+    function createBuilder(settings, source) {
+        var defs = getPropDefs(settings, source);
+        defs.regex.configurable = false;
+
+        return O.create(proto, defs);
     };
-    RegExpBuilder.prototype = {
-        constructor: RegExpBuilder,
-        valueOf: RegExpBuilder.prototype.toRegExp = function() { return this.regex; },
-        toString: function() { return "/" + this.source + "/" + this.flags; },
-        test: function(string) { return this.regex.test(string); },
-        exec: function(string) { return this.regex.exec(string); },
-        replace: function(string, subs) { return string.replace(this.regex, subs); },
-        split: function(string) { return string.split(this.regex); },
-        search: function(string) { return string.search(this.regex); }
-    };
+    function isBuilder(object) {
+        return proto.isPrototypeOf(object);
+    }
 
     function RE() {
-        return buildBuilder(new RegExpBuilder(getFlags(RE), parseArgs(arguments)), [ thenable ]);
+        return buildBuilder(createBuilder(getFlags(RE), parseArgs(arguments)), [ thenable ]);
     }
 
     buildBuilder(initFunc(RE,
