@@ -43,8 +43,10 @@ describe("RE-Build'ers", function() {
         assertFlags(RE.globally.matching("abc"),    "g");
         assertFlags(RE.anyCase.matching("abc"),     "i");
         assertFlags(RE.fullText.matching("abc"),    "m");
-        assertFlags(RE.withUnicode.matching("abc"), "u");
-        assertFlags(RE.stickily.matching("abc"),    "y");
+        if ("unicode" in /a/)
+            assertFlags(RE.withUnicode.matching("abc"), "u");
+        if ("sticky" in /a/)
+            assertFlags(RE.stickily.matching("abc"),    "y");
         assertFlags(RE.globally.anyCase.fullText.matching("abc"), "gim");
         assertFlags(RE.withFlags("img").matching("abc"),          "gim");
 
@@ -84,8 +86,10 @@ describe("RE-Build'ers", function() {
         assertSource(RE.matching.codePoint("♡"),     "\\u2661");
         assertSource(RE.matching.codePoint(0x1f370), "\\ud83c\\udf70");
         assertSource(RE.matching.codePoint("I♡🍰"),  "\\u0049\\u2661\\ud83c\\udf70");
-        assertSource(RE.withUnicode.matching.codePoint(0x1f370), "\\u{1f370}");
-        assertSource(RE.withUnicode.matching.codePoint("I♡🍰"),  "\\u0049\\u2661\\u{1f370}");
+        if ("unicode" in /a/) {
+            assertSource(RE.withUnicode.matching.codePoint(0x1f370), "\\u{1f370}");
+            assertSource(RE.withUnicode.matching.codePoint("I♡🍰"),  "\\u0049\\u2661\\u{1f370}");
+        }
 
         try {
             RE.matching.control("1");
