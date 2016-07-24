@@ -1,9 +1,9 @@
 RE-Build reference
 ==================
 
-# The `RegExpBuilder` class
+# `RegExp` builders
 
-The object obtained from building a regular expressions are instances of the class `RegExpBuilder`. The instances are augmented with members and methods to build the regex further, but they're basically immutable objects as every call to extend the builder returns a *new* `RegExpBuilder` instance.
+The object obtained from building a regular expressions *builders*. Builders are augmented with members and methods to build the regex further, but they're basically immutable objects as every call to extend the builder returns a *new* builder instance.
 
 ## Properties
 
@@ -28,14 +28,14 @@ Returns  | Name             | Description
 `RegExp` | `valueOf()`      | See above
 string   | `toString()`     | Returns a string representation
 boolean  | `test(string)`   | Uses the underlying regex to test a string. Short for `.regex.test(...)`
-array    | `exec(string)`   | Executes the underlying regex on a string. Short for `.regex.test(...)`
+array    | `exec(string)`   | Executes the underlying regex on a string. Short for `.regex.exec(...)`
 string   | `replace(string, string/function)` | Uses the underlying regex to perform a regex-based replacement. Short for `string.replace(regex, ...)`
 array    | `split(string)`  | Uses the underlying regex to perform a regex-based string split. Short for `string.split(regex)`
 number   | `search(string)` | Uses the underlying regex to perform a string search. Short for `string.search(regex)`
 
 # Building a regex
 
-Regex building begins from the he `RE` object returned by the module. You can obtain a *builder* (instances of `RegExpBuilder`) evry time you use "words" like `digit`, `then` and such. Some of these words act like functions (like `atLeast` and `unicode`), some like properties (like `digit` and `theEnd`), some work as both.
+Regex building begins from the he `RE` object returned by the module. You can obtain a *builder* every time you use "words" like `digit`, `then` and such. Some of these words act like functions (like `atLeast` and `codePoint`), some like properties (like `digit` and `theEnd`), some work as both.
 
 In this last case, if the word is not used as a function, additional words are expected to obtain a builder:
 
@@ -129,11 +129,11 @@ These words can be used in both "open" sequences or inside character sets. They 
 
 * **`control(letter)`**
 
-  A control sequence (`\cx`). `letter` must be a string of a single letter. It it then converted to uppercase in the sequence.
+  A control sequence (`\cx`). `letter` must be a string of a single letter. It is then converted to uppercase in the sequence.
 
 ## Open-only blocks
 
-These words can be used in open block sequences only (which means, not inside character sets. They can be used after conjunction words, or a quantifier, or the `matching` word, or the `RE` object itself.
+These words can be used in open block sequences only (which means, not inside character sets). They can be used after conjunction words, or a quantifier, or the `matching` word, or the `RE` object itself.
 
 * **`anyChar`**
 

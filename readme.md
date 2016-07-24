@@ -281,6 +281,7 @@ If mocha is installed globally, served side tests can be run with just the comma
 * Plurals, articles
 * CLI tool to translate regexes to and from RE-Build's syntax
 * More examples
+* Consider IE8 support
 
 ## License
 
