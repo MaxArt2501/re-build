@@ -67,7 +67,7 @@ var RE = require("re-build");
 var builder = RE.matching("xyz");
 ```
 
-The output is *not*, however, a regular expression, but a a regular expression *builder* that can be extended, or used as an extension for other builders. To get the corrisponding regular expression, use the `regex` property or the `toRegExp()/valueOf()` methods.
+The output is *not*, however, a regular expression, but a regular expression *builder* that can be extended, or used as an extension for other builders. To get the corresponding regular expression, use the `regex` property or the `toRegExp()/valueOf()` methods.
 
 ```js
 var start = RE.matching.theStart.then(builder).toRegExp(); // /^xyz/
