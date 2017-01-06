@@ -1,8 +1,11 @@
 {
   "name": "re-build",
   "main": "re-build.js",
-  "version": "1.0.0",
   "homepage": "https://github.com/MaxArt2501/re-build",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MaxArt2501/re-build.git"
+  },
   "authors": [
     "Massimo Artizzu <maxart.x@gmail.com>"
   ],
