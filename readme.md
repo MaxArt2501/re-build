@@ -116,7 +116,7 @@ Name           | Result       | Notes
 `null`         | `\0`         |
 `slash`        | `\/`         |
 `backslash`    | `\\`         |
-`backspace`    | `\b`         | can be used in character sets `[...]' *only*
+`backspace`    | `\b`         | can be used in character sets `[...]` *only*
 
 The first four names can be negated prefixing them with `not` to get the complementary meaning:
 
@@ -182,7 +182,7 @@ var amount = RE.matching("$").then.capture(
 // /\$(\d+(?:\.\d+)?)/
 ```
 
-The `group` and `capture` words are function, and the resulting groups will embrace everything passed as arguments. Just like `then` and `or`, arguments can be strings, regular expression or other RE-Build'ers.
+The `group` and `capture` words are function, and the resulting groups will embrace everything passed as arguments. Just like for `then` and `or`, arguments can be strings, regular expression or other RE-Build'ers.
 
 Backrefences for capturing groups are obtained using the `reference` function, passing the reference number:
 
@@ -197,7 +197,7 @@ var quote = RE.matching.capture( RE.oneOf("'\"") )
 
 Character sets (`[...]`) are introduced by the word `oneOf`. Several characters can be included separated by the word `and`. Additionally, one can include a character interval, using the function `range` and giving the initial and final character of the interval.
 
-Exclusive character sets can be obtained prefixing `oneOf` by the word `not`.
+Exclusive character sets can be obtained prefixing `oneOf` with the word `not`.
 
 ```js
 var hexColor = RE.matching("#").then.exactly(6)
